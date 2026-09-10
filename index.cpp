@@ -11,15 +11,7 @@ using namespace std;
 
 #define TAM 11
 
-// -----------------------------------------------------------------------
-// Le uma tecla do teclado SEM precisar apertar ENTER depois (baseado no
-// exemplo do Prof. Tiago Felski). So funciona no Linux/Mac, por isso o
-// jogo continua "Versao desenvolvida em Linux" (ver topo do arquivo).
-// A ideia: o terminal normalmente so entrega o que foi digitado depois
-// do ENTER (modo "canonico"). Aqui desligamos esse modo (ICANON) e o
-// eco automatico (ECHO) so durante a leitura de UM caractere, e depois
-// devolvemos o terminal ao normal.
-// -----------------------------------------------------------------------
+// Le uma tecla do teclado SEM precisar apertar ENTER
 int getch(void) {
     int ch;
     struct termios oldt;
@@ -33,47 +25,27 @@ int getch(void) {
     return ch;
 }
 
-// -----------------------------------------------------------------------
-// Para a tela ate o jogador apertar uma tecla. Usada nos lugares em que
-// uma mensagem precisa ficar visivel (tela Sobre, tela de vitoria,
-// avisos) em vez de o programa limpar a tela de novo sozinho e a
-// mensagem sumir rapido demais para dar tempo de ler.
-// -----------------------------------------------------------------------
+// Para a tela ate o jogador apertar uma tecla
 void AguardaTecla() {
     cout << "(pressione uma tecla para continuar) ";
     getch();
 }
 
-// -----------------------------------------------------------------------
-// Limpa a tela do terminal chamando o comando "clear" do sistema (a
-// mesma ideia que ja aparecia comentada no exemplo do Prof. Tiago
-// Felski). Sem isso, cada novo desenho do mapa ficaria empilhado
-// embaixo do anterior. So funciona no Linux/Mac.
-// -----------------------------------------------------------------------
+// Limpa a tela do terminal /clear
 void LimpaTela() {
     system("clear");
 }
 
-// -----------------------------------------------------------------------
-// Cada casa do mapa guarda um numero. Em vez de espalhar os numeros
-// "soltos" pelo codigo (o que dificulta a leitura), damos um nome para
-// cada um. Assim, "mapa[i][j] == PAREDE" fica muito mais facil de
-// entender do que "mapa[i][j] == 1".
-// -----------------------------------------------------------------------
-const int VAZIO   = 0; // chao livre, o jogador pode andar
-const int PAREDE  = 1; // parede solida, nunca pode ser atravessada
-const int JOGADOR = 2; // posicao atual do jogador (desenhado como '@')
-const int BLOCO   = 3; // bloco solido que obedece a gravidade e cai
-const int ALAVANCA = 4; // em cima dela o jogador pode girar o mapa (Q/E)
-const int SAIDA   = 5; // saida do labirinto: chegar aqui vence o jogo
-const int PORTA_H = 6; // porta "horizontal": fica fechada com o mapa deitado (0 ou 180 graus)
-const int PORTA_V = 7; // porta "vertical": fica fechada com o mapa em pe (90 ou 270 graus)
+const int VAZIO   = 0; 
+const int PAREDE  = 1;
+const int JOGADOR = 2;
+const int BLOCO   = 3;
+const int ALAVANCA = 4;
+const int SAIDA   = 5;
+const int PORTA_H = 6; // porta horizontal: fica fechada com o mapa deitado (0 ou 180 graus)
+const int PORTA_V = 7; // porta vertical: fica fechada com o mapa em pe (90 ou 270 graus)
 
-// -----------------------------------------------------------------------
-// Carrega um dos 3 mapas prontos para dentro da matriz "mapa".
-// Os mapas ficam guardados aqui dentro da funcao porque sao fixos
-// (nao mudam durante o jogo, servem so de "modelo" inicial).
-// -----------------------------------------------------------------------
+// Carrega um dos 3 mapas
 void CarregaMapa(int mapa[TAM][TAM], int numeroMapa) {
     int mapa1[TAM][TAM] = {
         {1,1,1,1,1,1,1,1,1,1,1},
@@ -124,67 +96,36 @@ void CarregaMapa(int mapa[TAM][TAM], int numeroMapa) {
     }
 }
 
-// -----------------------------------------------------------------------
-// Diz se uma porta (6 ou 7) esta fechada para a orientacao atual do mapa.
-// A porta 6 (PORTA_H) fecha quando o mapa esta "deitado" (0 ou 180).
-// A porta 7 (PORTA_V) fecha quando o mapa esta "em pe" (90 ou 270).
-// Essa funcao existe para nao repetir essa conta em varios lugares do
-// codigo (ela e usada para desenhar a porta, para saber se pode andar
-// por ela e para saber se ela pode segurar um bloco em cima).
-// -----------------------------------------------------------------------
+// Diz se uma porta (6 ou 7) esta fechada para a orientacao atual do mapa
 bool PortaFechada(int valor, int orientacao) {
-    if (valor == PORTA_H) return (orientacao == 0 || orientacao == 180);
-    if (valor == PORTA_V) return (orientacao == 90 || orientacao == 270);
+    if (valor == PORTA_H) return (orientacao == 0 || orientacao == 180); //fechada em 0 e 180 
+    if (valor == PORTA_V) return (orientacao == 90 || orientacao == 270); //fecahda em 90 e 270
     return false;
 }
 
-// -----------------------------------------------------------------------
-// Diz se o jogador pode ANDAR para a casa (linha, coluna).
-// Parede e bloco nunca podem ser atravessados. Uma porta so pode ser
-// atravessada quando ela esta aberta. Qualquer outra casa (vazio,
-// alavanca, saida...) pode ser atravessada normalmente.
-// -----------------------------------------------------------------------
+// Diz se o jogador pode andar para a casa
 bool CelulaAtravessavel(int mapa[TAM][TAM], int linha, int coluna, int orientacao) {
     int valor = mapa[linha][coluna];
     if (valor == PAREDE || valor == BLOCO) return false;
     if (valor == PORTA_H || valor == PORTA_V) return !PortaFechada(valor, orientacao);
-    return true;
+    return true; //atravesssa o resto
 }
 
-// -----------------------------------------------------------------------
-// Diz se a casa (linha, coluna) consegue SEGURAR um bloco em cima dela,
-// ou seja, se um bloco que esta caindo (por causa da gravidade) para
-// ao chegar nessa casa. Parede, jogador e outro bloco sempre seguram.
-// Portas e a saida tambem sempre seguram (o bloco para em cima delas),
-// mesmo com a porta aberta - assim um bloco caindo nunca apaga/estraga
-// a saida ou uma porta do mapa.
-// -----------------------------------------------------------------------
 bool CelulaSustentaBloco(int mapa[TAM][TAM], int linha, int coluna, int orientacao) {
-    (void) orientacao; // nao influencia mais esta funcao, mas mantido para nao mudar a assinatura
+    (void) orientacao;
     int valor = mapa[linha][coluna];
-    if (valor == PAREDE || valor == JOGADOR || valor == BLOCO) return true;
-    if (valor == SAIDA || valor == PORTA_H || valor == PORTA_V) return true;
+    if (valor == PAREDE || valor == JOGADOR || valor == BLOCO) return true; //segura
+    if (valor == SAIDA || valor == PORTA_H || valor == PORTA_V) return true; //nao apaga
     return false;
 }
 
-// -----------------------------------------------------------------------
-// Procura o jogador (numero 2) dentro do mapa e devolve a linha e a
-// coluna onde ele esta. Usada sempre que o mapa gira, ja que depois de
-// girar o jogador pode estar em outra posicao da matriz.
-// -----------------------------------------------------------------------
+// Procura o jogador dentro do mapa e devolve a linha e a coluna onde ele esta
 void LocalizaJogador(int mapa[TAM][TAM], int &linha, int &coluna) {
     for (int i = 0; i < TAM; i++)
         for (int j = 0; j < TAM; j++)
             if (mapa[i][j] == JOGADOR) { linha = i; coluna = j; }
-}
+} //sem break
 
-// -----------------------------------------------------------------------
-// Move o jogador uma casa na direcao da tecla (W/A/S/D).
-// "celulaSobJogador" guarda o que estava embaixo do jogador (por
-// exemplo VAZIO ou ALAVANCA), pois essa casa fica "escondida" enquanto
-// o '@' esta em cima dela. Ao mover, devolvemos essa casa antiga ao
-// mapa e guardamos o que havia no novo lugar.
-// -----------------------------------------------------------------------
 void MoveJogador(int mapa[TAM][TAM], int &px, int &py, int &celulaSobJogador, char tecla, int orientacao, bool &venceu, bool &moveu) {
     int novaX = px;
     int novaY = py;
@@ -196,54 +137,39 @@ void MoveJogador(int mapa[TAM][TAM], int &px, int &py, int &celulaSobJogador, ch
     if (!CelulaAtravessavel(mapa, novaX, novaY, orientacao)) return;
 
     int destinoAntigo = mapa[novaX][novaY];
-    mapa[px][py] = celulaSobJogador; // devolve a casa antiga ao mapa
-    celulaSobJogador = destinoAntigo; // guarda o que tinha no novo lugar
+    mapa[px][py] = celulaSobJogador; 
+    celulaSobJogador = destinoAntigo;
     mapa[novaX][novaY] = JOGADOR;
     px = novaX;
     py = novaY;
     moveu = true;
 
+ //identifica se o jogador esta em cima da saida o que daria a vitoria
+
     if (destinoAntigo == SAIDA) venceu = true;
 }
 
-// -----------------------------------------------------------------------
-// Gira toda a matriz 90 graus PARA A DIREITA (sentido horario).
-// A formula destino[j][TAM-1-i] = origem[i][j] e a formula classica de
-// rotacao de matriz: a primeira coluna da matriz original vira a
-// primeira linha da matriz girada, e assim por diante.
-// -----------------------------------------------------------------------
 void GiraDireita(int origem[TAM][TAM], int destino[TAM][TAM]) {
     for (int i = 0; i < TAM; i++)
         for (int j = 0; j < TAM; j++)
-            destino[j][TAM - 1 - i] = origem[i][j];
+            destino[j][TAM - 1 - i] = origem[i][j]; // primeira coluna da matriz original vira a primeira linha da matriz girada
 }
 
-// -----------------------------------------------------------------------
-// Gira toda a matriz 90 graus PARA A ESQUERDA (sentido anti-horario).
-// E a rotacao inversa da GiraDireita.
-// -----------------------------------------------------------------------
 void GiraEsquerda(int origem[TAM][TAM], int destino[TAM][TAM]) {
     for (int i = 0; i < TAM; i++)
         for (int j = 0; j < TAM; j++)
             destino[TAM - 1 - j][i] = origem[i][j];
 }
 
-// -----------------------------------------------------------------------
-// Depois que o mapa gira, os blocos (3) podem ficar "flutuando" no ar.
-// Essa funcao faz cada bloco cair (linha por linha) ate encostar em
-// algo que o segure (CelulaSustentaBloco). O "while (mudou)" repete o
-// processo ate que nenhum bloco se mexa mais, pois um bloco pode
-// precisar cair varias casas seguidas.
-// -----------------------------------------------------------------------
 void AplicaGravidade(int mapa[TAM][TAM], int orientacao) {
     bool mudou = true;
-    while (mudou) {
+    while (mudou) { // ve se o bloco se mexeu
         mudou = false;
-        for (int i = TAM - 2; i >= 0; i--) {
+        for (int i = TAM - 2; i >= 0; i--) { // 1 bloco por vez
             for (int j = 0; j < TAM; j++) {
                 if (mapa[i][j] == BLOCO) {
                     if (!CelulaSustentaBloco(mapa, i + 1, j, orientacao)) {
-                        mapa[i + 1][j] = BLOCO;
+                        mapa[i + 1][j] = BLOCO; // se nao segura ele desce mais uma
                         mapa[i][j] = VAZIO;
                         mudou = true;
                     }
@@ -253,23 +179,13 @@ void AplicaGravidade(int mapa[TAM][TAM], int orientacao) {
     }
 }
 
-// -----------------------------------------------------------------------
-// Diz se o jogador ficou esmagado por uma porta que fechou em cima
-// dele depois de uma rotacao.
-// -----------------------------------------------------------------------
+// Diz se o jogador ficou esmagado por uma porta que fechou em cima dps da rotação
 bool JogadorEsmagado(int celulaSobJogador, int orientacao) {
     if (celulaSobJogador == PORTA_H || celulaSobJogador == PORTA_V)
-        return PortaFechada(celulaSobJogador, orientacao);
+        return PortaFechada(celulaSobJogador, orientacao); //verifica se esta aberta ou nao
     return false;
-}
+} // se nao for porta
 
-// -----------------------------------------------------------------------
-// Executa a rotacao do mapa (tecla Q ou E), mas SO quando o jogador
-// esta em cima de uma alavanca (celulaSobJogador == ALAVANCA). Depois
-// de girar a matriz, e preciso: achar a nova posicao do jogador
-// (LocalizaJogador), aplicar a gravidade nos blocos (AplicaGravidade)
-// e checar se alguma porta fechou em cima do jogador.
-// -----------------------------------------------------------------------
 void ProcessaRotacao(int mapa[TAM][TAM], int &orientacao, int &px, int &py, int &celulaSobJogador, char tecla, bool &perdeu, bool &girou) {
     if (celulaSobJogador != ALAVANCA) {
         cout << "Voce precisa estar em cima da alavanca (A) para girar o mapa." << endl;
@@ -280,7 +196,7 @@ void ProcessaRotacao(int mapa[TAM][TAM], int &orientacao, int &px, int &py, int 
     int temp[TAM][TAM];
     if (tecla == 'E' || tecla == 'e') {
         GiraDireita(mapa, temp);
-        orientacao = (orientacao + 90) % 360;
+        orientacao = (orientacao + 90) % 360; // valor 0 e 359
     } else {
         GiraEsquerda(mapa, temp);
         orientacao = (orientacao + 270) % 360;
@@ -296,10 +212,6 @@ void ProcessaRotacao(int mapa[TAM][TAM], int &orientacao, int &px, int &py, int 
     if (JogadorEsmagado(celulaSobJogador, orientacao)) perdeu = true;
 }
 
-// -----------------------------------------------------------------------
-// Desenha o mapa inteiro no terminal, casa por casa, trocando cada
-// numero pelo simbolo que o jogador ve na tela.
-// -----------------------------------------------------------------------
 void DesenhaCenario(int mapa[TAM][TAM], int orientacao) {
     for (int i = 0; i < TAM; i++) {
         for (int j = 0; j < TAM; j++) {
@@ -313,16 +225,12 @@ void DesenhaCenario(int mapa[TAM][TAM], int orientacao) {
                 case SAIDA:   cout << "S "; break;
                 case PORTA_H: cout << (PortaFechada(PORTA_H, orientacao) ? "= " : ": "); break;
                 case PORTA_V: cout << (PortaFechada(PORTA_V, orientacao) ? "| " : "; "); break;
-            }
+            } // op ternario ? true fechada | : false aberta
         }
         cout << endl;
     }
 }
 
-// -----------------------------------------------------------------------
-// Mostra a linha de status acima do mapa: mapa atual, orientacao (em
-// graus), quantos movimentos e quantas rotacoes ja foram feitos.
-// -----------------------------------------------------------------------
 void ExibeStatus(int numeroMapa, int orientacao, int movimentos, int rotacoes) {
     cout << "Mapa: " << numeroMapa << " | Orientacao: " << orientacao
          << " graus | Movimentos: " << movimentos << " | Rotacoes: " << rotacoes << endl;
@@ -345,24 +253,12 @@ void ExibeSobre() {
     cout << "W A S D: mover | Q/E: girar (so na alavanca A) | R: reiniciar | X: menu" << endl;
 }
 
-// -----------------------------------------------------------------------
-// Le uma tecla de numero (0 a 9) usando getch() e devolve o digito como
-// inteiro. Usada nos menus, para o programa ler numeros do mesmo jeito
-// que le comandos do jogo: uma tecla, sem precisar de ENTER.
-// -----------------------------------------------------------------------
 int LeDigito() {
     char tecla = (char) getch();
-    cout << tecla << endl; // mostra o que foi digitado, ja que getch nao faz eco
-    return tecla - '0';
+    cout << tecla << endl; // mostra o que foi digitado
+    return tecla - '0'; //ASCII 3 = 51, 0 = 48
 }
 
-// -----------------------------------------------------------------------
-// Volta a fase para o estado inicial: recarrega o mapa do zero, acha o
-// jogador de novo e zera orientacao/contadores. Essa funcao existe
-// porque o mesmo bloco de codigo era repetido em 3 lugares (comeco de
-// jogo novo, tecla R e quando o jogador e esmagado por uma porta) -
-// juntando tudo em uma funcao evita repeticao e deixa o codigo menor.
-// -----------------------------------------------------------------------
 void ReiniciaFase(int mapa[TAM][TAM], int numeroMapa, int &orientacao, int &px, int &py,
                    int &celulaSobJogador, int &movimentos, int &rotacoes) {
     CarregaMapa(mapa, numeroMapa);
@@ -373,11 +269,7 @@ void ReiniciaFase(int mapa[TAM][TAM], int numeroMapa, int &orientacao, int &px, 
     rotacoes = 0;
 }
 
-// -----------------------------------------------------------------------
-// Loop principal de uma fase: mostra o mapa, le uma tecla do jogador e
-// decide o que fazer com ela (mover, girar, reiniciar ou voltar ao
-// menu). Continua repetindo ate o jogador vencer ou sair para o menu.
-// -----------------------------------------------------------------------
+// Loop principal de uma fase, mostra o mapa, le uma tecla do jogador e decide o que fazer com ela (mover, girar, reiniciar ou voltar ao menu)
 void JogaFase(int mapa[TAM][TAM], int numeroMapa, int &orientacao, int &px, int &py,
               int &celulaSobJogador, int &movimentos, int &rotacoes, bool &jogoEmAndamento) {
     char tecla;
@@ -386,8 +278,8 @@ void JogaFase(int mapa[TAM][TAM], int numeroMapa, int &orientacao, int &px, int 
         ExibeStatus(numeroMapa, orientacao, movimentos, rotacoes);
         DesenhaCenario(mapa, orientacao);
         cout << "Comando: ";
-        tecla = (char) getch();   // le a tecla na hora, sem precisar de ENTER
-        cout << tecla << endl;    // mostra a tecla digitada (getch nao faz eco sozinho)
+        tecla = (char) getch();   // le a tecla na hora
+        cout << tecla << endl;
 
         if (tecla == 'X' || tecla == 'x') {
             cout << "Voltando ao menu. O jogo fica pausado: escolha 'Continuar o jogo' para retomar de onde parou." << endl;
@@ -404,10 +296,10 @@ void JogaFase(int mapa[TAM][TAM], int numeroMapa, int &orientacao, int &px, int 
 
         if (tecla == 'Q' || tecla == 'q' || tecla == 'E' || tecla == 'e') {
             ProcessaRotacao(mapa, orientacao, px, py, celulaSobJogador, tecla, perdeu, girou);
-            if (girou) rotacoes++;
+            if (girou) rotacoes++; //se tiver em A rotaciona
         } else {
             MoveJogador(mapa, px, py, celulaSobJogador, tecla, orientacao, venceu, moveu);
-            if (moveu) movimentos++;
+            if (moveu) movimentos++; //move
         }
 
         if (perdeu) {
