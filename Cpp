@@ -1,14 +1,6 @@
-// Trabalho M1 - Labirinto Giratorio
-// Algoritmos e Programacao II (22817) - Prof. Tiago Felski
-// Equipe: Arthur Ferraz de Aquino & Vicenzo Roman Radin
-// Versao desenvolvida em Linux
-//
-// Sequencias de teclas que resolvem cada mapa (conferidas com busca
-// exaustiva sobre todos os estados possiveis do jogo, nao so testadas
-// a mao - ver scripts/solver.py no historico do projeto):
-// Mapa 1 (depende do bloco cair para abrir passagem): D Q D D W W W W W
-// Mapa 2 (depende da porta que some ao girar):         S D D D D Q W A A W W W
-// Mapa 3 (precisa de 2 rotacoes para ser resolvido):   D Q W D W W W A Q W A A A
+// Mapa 1: D Q D D W W W W W
+// Mapa 2: S D D D D Q W A A W W W
+// Mapa 3: D Q W D W W W A Q W A A A
 
 #include <iostream>
 #include <cstdlib>
@@ -17,7 +9,6 @@
 #include <unistd.h>
 using namespace std;
 
-// Tamanho do mapa: sempre 11 x 11 casas (linhas x colunas)
 #define TAM 11
 
 // -----------------------------------------------------------------------
@@ -164,12 +155,15 @@ bool CelulaAtravessavel(int mapa[TAM][TAM], int linha, int coluna, int orientaca
 // Diz se a casa (linha, coluna) consegue SEGURAR um bloco em cima dela,
 // ou seja, se um bloco que esta caindo (por causa da gravidade) para
 // ao chegar nessa casa. Parede, jogador e outro bloco sempre seguram.
-// Uma porta so segura o bloco quando esta fechada.
+// Portas e a saida tambem sempre seguram (o bloco para em cima delas),
+// mesmo com a porta aberta - assim um bloco caindo nunca apaga/estraga
+// a saida ou uma porta do mapa.
 // -----------------------------------------------------------------------
 bool CelulaSustentaBloco(int mapa[TAM][TAM], int linha, int coluna, int orientacao) {
+    (void) orientacao; // nao influencia mais esta funcao, mas mantido para nao mudar a assinatura
     int valor = mapa[linha][coluna];
     if (valor == PAREDE || valor == JOGADOR || valor == BLOCO) return true;
-    if (valor == PORTA_H || valor == PORTA_V) return PortaFechada(valor, orientacao);
+    if (valor == SAIDA || valor == PORTA_H || valor == PORTA_V) return true;
     return false;
 }
 
