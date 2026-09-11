@@ -179,14 +179,7 @@ void AplicaGravidade(int mapa[TAM][TAM], int orientacao) {
     }
 }
 
-// Diz se o jogador ficou esmagado por uma porta que fechou em cima dps da rotação
-bool JogadorEsmagado(int celulaSobJogador, int orientacao) {
-    if (celulaSobJogador == PORTA_H || celulaSobJogador == PORTA_V)
-        return PortaFechada(celulaSobJogador, orientacao); //verifica se esta aberta ou nao
-    return false;
-} // se nao for porta
-
-void ProcessaRotacao(int mapa[TAM][TAM], int &orientacao, int &px, int &py, int &celulaSobJogador, char tecla, bool &perdeu, bool &girou) {
+void ProcessaRotacao(int mapa[TAM][TAM], int &orientacao, int &px, int &py, int &celulaSobJogador, char tecla, bool &girou) {
     if (celulaSobJogador != ALAVANCA) {
         cout << "Voce precisa estar em cima da alavanca (A) para girar o mapa." << endl;
         AguardaTecla();
@@ -208,8 +201,6 @@ void ProcessaRotacao(int mapa[TAM][TAM], int &orientacao, int &px, int &py, int 
     LocalizaJogador(mapa, px, py);
     AplicaGravidade(mapa, orientacao);
     girou = true;
-
-    if (JogadorEsmagado(celulaSobJogador, orientacao)) perdeu = true;
 }
 
 void DesenhaCenario(int mapa[TAM][TAM], int orientacao) {
@@ -292,19 +283,14 @@ void JogaFase(int mapa[TAM][TAM], int numeroMapa, int &orientacao, int &px, int 
             continue;
         }
 
-        bool venceu = false, perdeu = false, moveu = false, girou = false;
+        bool venceu = false, moveu = false, girou = false;
 
         if (tecla == 'Q' || tecla == 'q' || tecla == 'E' || tecla == 'e') {
-            ProcessaRotacao(mapa, orientacao, px, py, celulaSobJogador, tecla, perdeu, girou);
+            ProcessaRotacao(mapa, orientacao, px, py, celulaSobJogador, tecla, girou);
             if (girou) rotacoes++; //se tiver em A rotaciona
         } else {
             MoveJogador(mapa, px, py, celulaSobJogador, tecla, orientacao, venceu, moveu);
             if (moveu) movimentos++; //move
-        }
-
-        if (perdeu) {
-            cout << "Esmagado pela porta! Reiniciando a fase..." << endl;
-            ReiniciaFase(mapa, numeroMapa, orientacao, px, py, celulaSobJogador, movimentos, rotacoes);
         }
 
         if (venceu) {
