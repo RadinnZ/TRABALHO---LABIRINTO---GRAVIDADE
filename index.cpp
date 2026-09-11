@@ -11,16 +11,16 @@ using namespace std;
 
 #define TAM 11
 
-// Le uma tecla do teclado SEM precisar apertar ENTER
+// Le uma tecla do teclado sem precisar enter
 int getch(void) {
     int ch;
-    struct termios oldt;
-    struct termios newt;
-    tcgetattr(STDIN_FILENO, &oldt);          // guarda as configuracoes antigas
-    newt = oldt;                             // copia as configuracoes antigas para as novas
-    newt.c_lflag &= ~(ICANON | ECHO);        // desliga modo canonico e eco
+    termios oldt;
+    termios newt;
+    tcgetattr(STDIN_FILENO, &oldt);// guarda as configuracoes antigas
+    newt = oldt;// copia as configuracoes antigas para as novas
+    newt.c_lflag &= ~(ICANON | ECHO); 
     tcsetattr(STDIN_FILENO, TCSANOW, &newt); // aplica as novas configuracoes
-    ch = getchar();                          // pega a tecla
+    ch = getchar();// pega a tecla
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // restaura as configuracoes antigas
     return ch;
 }
